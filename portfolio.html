@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ahmed Yasser | Engineer &amp; Builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&amp;family=Syne:wght@400;600;700;800&amp;family=Instrument+Serif:ital@0;1&amp;display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:       #070809;
+    --bg2:      #0b0d0f;
+    --surface:  #0f1114;
+    --surface2: #13161a;
+    --border:   #1c2026;
+    --border2:  #242a32;
+    --cyan:     #00e5ff;
+    --cyan-dim: rgba(0,229,255,0.08);
+    --cyan-mid: rgba(0,229,255,0.18);
+    --green:    #39ff14;
+    --green-dim:rgba(57,255,20,0.07);
+    --text:     #d4dce8;
+    --text2:    #8a97a8;
+    --muted:    #4a5568;
+    --white:    #f0f4f8;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  ::selection{background:var(--cyan);color:#000;}
+  html{scroll-behavior:smooth;}
+  body{background:var(--bg);color:var(--text);font-family:"Share Tech Mono",monospace;cursor:none;overflow-x:hidden;}
+
+  /* SCANLINE OVERLAY */
+  body::before{content:"";position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px);pointer-events:none;z-index:9997;}
+
+  /* CURSOR */
+  #cursor{position:fixed;width:8px;height:8px;background:var(--cyan);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);box-shadow:0 0 10px var(--cyan),0 0 20px var(--cyan);transition:width .15s,height .15s;}
+  #cursor-ring{position:fixed;width:32px;height:32px;border:1px solid var(--cyan);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);opacity:.4;transition:width .2s,height .2s,opacity .2s;}
+
+  /* NAV */
+  nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;justify-content:space-between;align-items:center;padding:1.4rem 4rem;border-bottom:1px solid transparent;transition:all .3s;}
+  nav.scrolled{border-color:var(--border);background:rgba(7,8,9,0.92);backdrop-filter:blur(24px);}
+  .nav-logo{font-family:"Syne",sans-serif;font-weight:800;font-size:1rem;letter-spacing:.04em;color:var(--white);text-decoration:none;display:flex;align-items:center;gap:.5rem;}
+  .nav-logo .bracket{color:var(--cyan);font-family:"Share Tech Mono",monospace;}
+  .nav-links{display:flex;gap:2.5rem;list-style:none;}
+  .nav-links a{color:var(--muted);text-decoration:none;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;transition:color .2s;position:relative;}
+  .nav-links a::before{content:"./";color:var(--cyan);opacity:0;transition:opacity .2s;}
+  .nav-links a:hover{color:var(--cyan);}
+  .nav-links a:hover::before{opacity:1;}
+
+  /* HERO */
+  #hero{min-height:100vh;display:grid;grid-template-columns:1fr 1fr;align-items:center;padding:0 4rem;position:relative;overflow:hidden;}
+
+  /* Grid bg */
+  .grid-bg{position:absolute;inset:0;
+    background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);
+    background-size:48px 48px;opacity:.5;
+    mask-image:radial-gradient(ellipse 70% 70% at 40% 50%,black 10%,transparent 100%);}
+
+  /* Glowing orb */
+  .hero-orb{position:absolute;width:500px;height:500px;left:28%;top:50%;transform:translate(-50%,-50%);
+    background:radial-gradient(circle,rgba(0,229,255,0.06) 0%,transparent 65%);pointer-events:none;}
+
+  /* Corner decorations */
+  .corner{position:absolute;width:40px;height:40px;border-color:var(--cyan);border-style:solid;opacity:.3;}
+  .corner-tl{top:2rem;left:2rem;border-width:1px 0 0 1px;}
+  .corner-tr{top:2rem;right:2rem;border-width:1px 1px 0 0;}
+  .corner-bl{bottom:2rem;left:2rem;border-width:0 0 1px 1px;}
+  .corner-br{bottom:2rem;right:2rem;border-width:0 1px 1px 0;}
+
+  .hero-left{position:relative;z-index:2;}
+
+  /* Terminal tag */
+  .term-tag{display:inline-flex;align-items:center;gap:.6rem;background:var(--surface);border:1px solid var(--border2);color:var(--cyan);font-size:.7rem;letter-spacing:.1em;padding:.4rem 1rem;border-radius:2px;margin-bottom:2rem;opacity:0;animation:fadeUp .7s .2s forwards;}
+  .term-prompt{color:var(--green);margin-right:.2rem;}
+  .blink{animation:blink-anim 1s step-end infinite;color:var(--cyan);}
+  @keyframes blink-anim{0%,100%{opacity:1}50%{opacity:0}}
+
+  .hero-name{font-family:"Syne",sans-serif;font-weight:800;font-size:clamp(3rem,6.5vw,5.5rem);line-height:.95;letter-spacing:-.03em;margin-bottom:.8rem;opacity:0;animation:fadeUp .8s .4s forwards;}
+  .hero-name .line1{color:var(--white);}
+  .hero-name .line2{font-family:"Instrument Serif",serif;font-style:italic;color:var(--cyan);display:block;text-shadow:0 0 40px rgba(0,229,255,0.3);}
+
+  .hero-role{font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;color:var(--text2);margin-bottom:2rem;opacity:0;animation:fadeUp .8s .5s forwards;}
+  .hero-role span{color:var(--cyan);margin:0 .5rem;}
+
+  .hero-sub{font-size:.82rem;color:var(--text2);margin-bottom:2.5rem;line-height:2;max-width:420px;opacity:0;animation:fadeUp .8s .6s forwards;border-left:2px solid var(--border2);padding-left:1rem;}
+  .hero-sub strong{color:var(--white);font-weight:400;}
+  .hero-sub em{color:var(--cyan);font-style:normal;}
+
+  .hero-cta{display:flex;gap:1rem;flex-wrap:wrap;opacity:0;animation:fadeUp .8s .8s forwards;}
+  .btn-primary{display:inline-block;background:transparent;border:1px solid var(--cyan);color:var(--cyan);font-family:"Share Tech Mono",monospace;font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;padding:.85rem 2rem;text-decoration:none;border-radius:2px;position:relative;overflow:hidden;transition:color .3s;}
+  .btn-primary::before{content:"";position:absolute;inset:0;background:var(--cyan);transform:translateX(-100%);transition:transform .3s;z-index:-1;}
+  .btn-primary:hover{color:#000;}
+  .btn-primary:hover::before{transform:translateX(0);}
+  .btn-ghost{display:inline-block;border:1px solid var(--border2);color:var(--muted);font-family:"Share Tech Mono",monospace;font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;padding:.85rem 2rem;text-decoration:none;border-radius:2px;transition:border-color .2s,color .2s;}
+  .btn-ghost:hover{border-color:var(--border2);color:var(--text);}
+
+  /* PHOTO */
+  .hero-right{position:relative;z-index:2;display:flex;justify-content:center;align-items:center;opacity:0;animation:fadeLeft .9s .5s forwards;}
+  .photo-wrap{position:relative;width:360px;}
+  .photo-frame{position:relative;width:360px;height:440px;border:1px solid var(--border2);}
+  .photo-frame img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block;filter:grayscale(20%) contrast(1.08) brightness(0.92);}
+
+  /* Cyan overlay stripe */
+  .photo-frame::after{content:"";position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);}
+
+  /* Corner brackets on photo */
+  .ph-corner{position:absolute;width:16px;height:16px;border-color:var(--cyan);border-style:solid;z-index:3;}
+  .ph-tl{top:-1px;left:-1px;border-width:2px 0 0 2px;}
+  .ph-tr{top:-1px;right:-1px;border-width:2px 2px 0 0;}
+  .ph-bl{bottom:-1px;left:-1px;border-width:0 0 2px 2px;}
+  .ph-br{bottom:-1px;right:-1px;border-width:0 2px 2px 0;}
+
+  .photo-data{position:absolute;bottom:-40px;left:0;right:0;display:flex;justify-content:space-between;font-size:.65rem;color:var(--muted);letter-spacing:.08em;padding:.5rem 0;border-bottom:1px solid var(--border);}
+  .photo-data span{color:var(--cyan);}
+
+  /* scan line anim on photo */
+  .photo-scan{position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);opacity:.4;animation:scan 4s linear infinite;z-index:4;}
+  @keyframes scan{0%{top:0;opacity:.4}100%{top:100%;opacity:0}}
+
+  .scroll-hint{position:absolute;bottom:2.5rem;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:.5rem;color:var(--muted);font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;opacity:0;animation:fadeUp 1s 1.2s forwards;}
+  .scroll-line{width:1px;height:44px;background:linear-gradient(to bottom,var(--cyan),transparent);animation:grow 2s infinite;}
+  @keyframes grow{0%,100%{transform:scaleY(.2);opacity:.2}50%{transform:scaleY(1);opacity:1}}
+
+  /* TICKER */
+  .ticker-bar{background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border);overflow:hidden;padding:.55rem 0;white-space:nowrap;}
+  .ticker-inner{display:inline-flex;gap:3rem;animation:ticker 36s linear infinite;}
+  @keyframes ticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+  .ticker-item{font-size:.67rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);display:inline-flex;align-items:center;gap:1rem;}
+  .ticker-item::after{content:"//";color:var(--cyan);opacity:.5;margin-left:.5rem;}
+
+  /* SECTION COMMON */
+  section{padding:7rem 4rem;position:relative;}
+  .section-label{font-size:.67rem;letter-spacing:.22em;text-transform:uppercase;color:var(--cyan);margin-bottom:.8rem;display:flex;align-items:center;gap:1rem;}
+  .section-label::before{content:"";width:1.5rem;height:1px;background:var(--cyan);}
+  .section-label::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent);max-width:200px;}
+  .section-title{font-family:"Syne",sans-serif;font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:800;letter-spacing:-.03em;line-height:1.1;margin-bottom:1.5rem;color:var(--white);}
+  .section-title .accent{color:var(--cyan);}
+
+  /* ABOUT */
+  #about{background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
+  .about-grid{display:grid;grid-template-columns:1fr 1fr;gap:5rem;align-items:start;max-width:1100px;margin:0 auto;}
+  .about-text p{color:var(--text2);font-size:.84rem;line-height:2.1;margin-bottom:1.2rem;}
+  .about-text p strong{color:var(--white);font-weight:400;}
+  .about-text p em{color:var(--cyan);font-style:normal;}
+  .about-stats{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+  .stat-card{border:1px solid var(--border);padding:1.4rem;border-radius:2px;background:var(--surface);transition:border-color .3s,transform .3s;position:relative;overflow:hidden;}
+  .stat-card::before{content:"";position:absolute;top:0;left:0;width:100%;height:1px;background:linear-gradient(90deg,var(--cyan),transparent);opacity:0;transition:opacity .3s;}
+  .stat-card:hover{border-color:var(--border2);transform:translateY(-3px);}
+  .stat-card:hover::before{opacity:1;}
+  .stat-num{font-family:"Syne",sans-serif;font-size:1.8rem;font-weight:800;color:var(--cyan);line-height:1;margin-bottom:.4rem;text-shadow:0 0 20px rgba(0,229,255,0.3);}
+  .stat-label{font-size:.68rem;color:var(--muted);letter-spacing:.06em;line-height:1.6;}
+
+  /* SKILLS */
+  #skills{background:var(--bg);border-bottom:1px solid var(--border);}
+  .skills-inner{max-width:1100px;margin:0 auto;}
+  .skills-two-col{display:grid;grid-template-columns:1fr 1fr;gap:5rem;margin-top:3rem;align-items:start;}
+  .skill-item{margin-bottom:1.2rem;}
+  .skill-header{display:flex;justify-content:space-between;margin-bottom:.5rem;}
+  .skill-name{font-size:.76rem;color:var(--text2);letter-spacing:.06em;}
+  .skill-pct{font-size:.7rem;color:var(--cyan);font-family:"Syne",sans-serif;font-weight:700;}
+  .skill-track{height:1px;background:var(--border);position:relative;}
+  .skill-fill{position:absolute;top:0;left:0;height:1px;background:linear-gradient(90deg,var(--border2),var(--cyan));width:0;transition:width 1.4s cubic-bezier(.16,1,.3,1);box-shadow:0 0 8px var(--cyan);}
+  .skill-fill.animated{width:var(--w);}
+  .skill-dot{position:absolute;right:0;top:50%;transform:translate(50%,-50%);width:5px;height:5px;background:var(--cyan);border-radius:50%;box-shadow:0 0 8px var(--cyan);}
+
+  .int-grid{display:grid;grid-template-columns:1fr 1fr;gap:.8rem;}
+  .int-card{border:1px solid var(--border);padding:1.2rem;border-radius:2px;background:var(--surface);transition:border-color .3s,transform .3s;position:relative;}
+  .int-card:hover{border-color:rgba(0,229,255,0.2);transform:translateY(-2px);background:var(--surface2);}
+  .int-icon{font-size:1.2rem;margin-bottom:.5rem;display:block;}
+  .int-name{font-family:"Syne",sans-serif;font-size:.78rem;font-weight:700;color:var(--white);margin-bottom:.3rem;}
+  .int-desc{font-size:.7rem;color:var(--muted);line-height:1.7;}
+
+  /* PROJECTS */
+  #projects{background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
+  .projects-inner{max-width:1100px;margin:0 auto;}
+  .projects-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;margin-top:3rem;}
+  .project-card{border:1px solid var(--border);padding:1.8rem;border-radius:2px;background:var(--surface);transition:all .3s;position:relative;overflow:hidden;}
+  .project-card.featured{grid-column:1/-1;}
+  .project-card::after{content:"";position:absolute;bottom:0;left:0;right:100%;height:1px;background:var(--cyan);transition:right .4s;}
+  .project-card:hover{border-color:var(--border2);background:var(--surface2);}
+  .project-card:hover::after{right:0;}
+  .project-tag{display:inline-flex;align-items:center;gap:.4rem;font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan);border:1px solid rgba(0,229,255,0.2);padding:.2rem .6rem;border-radius:2px;margin-bottom:.9rem;}
+  .project-tag::before{content:"▶";font-size:.4rem;}
+  .project-title{font-family:"Syne",sans-serif;font-weight:700;font-size:1rem;margin-bottom:.6rem;color:var(--white);}
+  .project-desc{font-size:.76rem;color:var(--text2);line-height:1.9;}
+  .project-tech{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1.2rem;}
+  .tech-chip{font-size:.62rem;letter-spacing:.08em;background:var(--bg);border:1px solid var(--border);color:var(--muted);padding:.25rem .6rem;border-radius:2px;transition:border-color .2s,color .2s;}
+  .tech-chip:hover{border-color:rgba(0,229,255,0.2);color:var(--cyan);}
+
+  /* C projects sub grid */
+  .c-projects{display:grid;grid-template-columns:repeat(3,1fr);gap:.8rem;margin-top:1.2rem;}
+  .c-proj-item{background:var(--bg);border:1px solid var(--border);padding:1rem;border-radius:2px;transition:border-color .2s;}
+  .c-proj-item:hover{border-color:rgba(0,229,255,0.2);}
+  .c-proj-name{font-size:.75rem;color:var(--white);margin-bottom:.3rem;font-family:"Syne",sans-serif;font-weight:700;}
+  .c-proj-desc{font-size:.67rem;color:var(--muted);line-height:1.7;}
+
+  /* STACK */
+  #stack{max-width:1100px;margin:0 auto;}
+  .stack-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.9rem;margin-top:3rem;}
+  .stack-card{border:1px solid var(--border);padding:1.4rem 1rem;border-radius:2px;background:var(--surface);text-align:center;transition:all .3s;position:relative;overflow:hidden;}
+  .stack-card::before{content:"";position:absolute;inset:0;background:var(--cyan-dim);opacity:0;transition:opacity .3s;}
+  .stack-card:hover{border-color:rgba(0,229,255,0.2);}
+  .stack-card:hover::before{opacity:1;}
+  .stack-icon{font-size:1.5rem;margin-bottom:.5rem;display:block;}
+  .stack-name{font-family:"Syne",sans-serif;font-size:.78rem;font-weight:700;color:var(--white);margin-bottom:.2rem;}
+  .stack-desc{font-size:.67rem;color:var(--muted);line-height:1.6;}
+
+  /* PHILOSOPHY */
+  #philosophy{background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
+  .philosophy-inner{max-width:880px;margin:0 auto;text-align:center;}
+  .big-quote{font-family:"Instrument Serif",serif;font-style:italic;font-size:clamp(1.5rem,3vw,2.3rem);line-height:1.5;color:var(--white);margin-bottom:1.2rem;position:relative;}
+  .big-quote::before{content:"\201C";position:absolute;top:-1.5rem;left:-1.5rem;font-size:5rem;color:var(--cyan);opacity:.1;line-height:1;font-family:"Instrument Serif",serif;}
+  .quote-attr{font-size:.68rem;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-bottom:3.5rem;}
+  .principles{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;text-align:left;}
+  .principle{border:1px solid var(--border);padding:1.4rem;border-radius:2px;background:var(--surface);transition:border-color .3s,transform .3s;position:relative;overflow:hidden;}
+  .principle::before{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--cyan);opacity:0;transition:opacity .3s;}
+  .principle:hover{border-color:var(--border2);transform:translateY(-2px);}
+  .principle:hover::before{opacity:1;}
+  .p-name{color:var(--cyan);font-family:"Syne",sans-serif;font-weight:700;font-size:.82rem;margin-bottom:.5rem;letter-spacing:.04em;}
+  .p-text{font-size:.74rem;color:var(--muted);line-height:1.85;}
+
+  /* CONTACT */
+  #contact{border-top:1px solid var(--border);}
+  .contact-inner{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:5rem;align-items:start;}
+  .contact-left p{color:var(--text2);font-size:.82rem;line-height:1.95;margin-bottom:2rem;max-width:400px;}
+  .contact-links{display:flex;flex-direction:column;gap:.8rem;}
+  .contact-link{display:flex;align-items:center;gap:1rem;color:var(--text2);text-decoration:none;font-size:.78rem;padding:.9rem 1.2rem;border:1px solid var(--border);border-radius:2px;background:var(--surface);transition:all .2s;position:relative;overflow:hidden;}
+  .contact-link::before{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--cyan);transform:scaleY(0);transition:transform .2s;}
+  .contact-link:hover{border-color:var(--border2);color:var(--white);background:var(--surface2);transform:translateX(4px);}
+  .contact-link:hover::before{transform:scaleY(1);}
+  .cl-icon{font-size:1rem;width:1.4rem;text-align:center;color:var(--cyan);}
+  .contact-right{border:1px solid var(--border);border-radius:2px;padding:2.2rem;background:var(--surface);position:relative;overflow:hidden;}
+  .contact-right::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);}
+  .contact-right h3{font-family:"Syne",sans-serif;font-weight:700;font-size:1rem;margin-bottom:.4rem;color:var(--white);}
+  .contact-right .sub{font-size:.74rem;color:var(--muted);margin-bottom:1.5rem;}
+  .contact-val{display:block;color:var(--cyan);font-size:.9rem;text-decoration:none;margin-bottom:.5rem;transition:opacity .2s;letter-spacing:.04em;}
+  .contact-val:hover{opacity:.7;}
+  .contact-val.big{font-family:"Instrument Serif",serif;font-style:italic;font-size:1.2rem;}
+  .c-divider{margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border);font-size:.68rem;color:var(--muted);line-height:1.8;}
+
+  /* STATUS BADGE */
+  .status-badge{display:inline-flex;align-items:center;gap:.5rem;background:rgba(57,255,20,0.06);border:1px solid rgba(57,255,20,0.15);color:rgba(57,255,20,0.8);font-size:.67rem;letter-spacing:.1em;text-transform:uppercase;padding:.35rem .9rem;border-radius:2px;margin-top:1rem;}
+  .status-dot{width:5px;height:5px;background:var(--green);border-radius:50%;box-shadow:0 0 6px var(--green);animation:blink-anim 2s infinite;}
+
+  /* FOOTER */
+  footer{border-top:1px solid var(--border);padding:1.8rem 4rem;display:flex;justify-content:space-between;align-items:center;font-size:.68rem;color:var(--muted);letter-spacing:.08em;}
+  footer .accent{color:var(--cyan);}
+
+  /* ANIMATIONS */
+  @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes fadeLeft{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+  .reveal{opacity:0;transform:translateY(24px);transition:opacity .65s ease,transform .65s ease;}
+  .reveal.visible{opacity:1;transform:translateY(0);}
+
+  /* RESPONSIVE */
+  @media(max-width:900px){
+    nav{padding:1.2rem 2rem;}.nav-links{display:none;}
+    #hero{grid-template-columns:1fr;padding:8rem 2rem 5rem;text-align:center;gap:3rem;}
+    .hero-right{order:-1;}.photo-wrap{width:260px;}.photo-frame{width:260px;height:320px;}
+    .hero-sub{border-left:none;padding-left:0;}
+    .hero-cta{justify-content:center;}
+    section{padding:5rem 2rem;}
+    .about-grid,.skills-two-col,.contact-inner{grid-template-columns:1fr;gap:2.5rem;}
+    .projects-grid{grid-template-columns:1fr;}.project-card.featured{grid-column:auto;}
+    .c-projects{grid-template-columns:1fr;}
+    .stack-grid{grid-template-columns:repeat(2,1fr);}
+    .principles{grid-template-columns:1fr;}
+    .about-stats{grid-template-columns:1fr 1fr;}
+    footer{flex-direction:column;gap:1rem;text-align:center;padding:2rem;}
+  }
+</style>
+</head>
+<body>
+<div id="cursor" style="left: 1298px; top: 207px; width: 8px; height: 8px;"></div>
+<div id="cursor-ring" style="left: 1298px; top: 207px; width: 32px; height: 32px; opacity: 0.4;"></div>
+
+<!-- NAV -->
+<nav id="nav" class="">
+  <a href="#hero" class="nav-logo"><span class="bracket">[</span>&nbsp;AY&nbsp;<span class="bracket">]</span></a>
+  <ul class="nav-links">
+    <li><a href="#about">About</a></li>
+    <li><a href="#skills">Skills</a></li>
+    <li><a href="#projects">Projects</a></li>
+    <li><a href="#stack">Stack</a></li>
+    <li><a href="#philosophy">Thinking</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="grid-bg"></div>
+  <div class="hero-orb"></div>
+  <div class="corner corner-tl"></div>
+  <div class="corner corner-tr"></div>
+  <div class="corner corner-bl"></div>
+  <div class="corner corner-br"></div>
+
+  <div class="hero-left">
+    <div class="term-tag"><span class="term-prompt">~$</span> whoami<span class="blink">_</span></div>
+    <h1 class="hero-name">
+      <span class="line1">Ahmed</span>
+      <span class="line2">Yasser</span>
+    </h1>
+    <div class="hero-role">Engineering Student <span>//</span> Systems Thinker <span>//</span> Builder</div>
+    <p class="hero-sub">
+      Studying <strong>Communications &amp; Electronics</strong> at Zagazig University.
+      I don't just want to <em>use</em> technology — I want to understand it
+      from the ground up, so I can eventually <strong>design and build real systems.</strong>
+    </p>
+    <div class="hero-cta">
+      <a href="#projects" class="btn-primary">./view_projects</a>
+      <a href="#contact" class="btn-ghost">./contact_me</a>
+    </div>
+    <div class="status-badge"><span class="status-dot"></span>Open to collaboration</div>
+  </div>
+
+  <div class="hero-right">
+    <div class="photo-wrap">
+      <div class="photo-frame">
+        <div class="photo-scan"></div>
+        <img src="ME.png" alt="Ahmed Yasser">
+        <span class="ph-corner ph-tl"></span>
+        <span class="ph-corner ph-tr"></span>
+        <span class="ph-corner ph-bl"></span>
+        <span class="ph-corner ph-br"></span>
+      </div>
+      <div class="photo-data">
+        <span>ID: <span>AHMED_YASSER</span></span>
+        <span>ZU / <span>ENG</span></span>
+        <span>STATUS: <span>ACTIVE</span></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="scroll-hint"><div class="scroll-line"></div>scroll</div>
+</section>
+
+<!-- TICKER -->
+<div class="ticker-bar"><div class="ticker-inner">
+  <span class="ticker-item">C Programming</span><span class="ticker-item">Linux Systems</span>
+  <span class="ticker-item">Computer Networking</span><span class="ticker-item">Digital Logic</span>
+  <span class="ticker-item">Electronics &amp; Circuits</span><span class="ticker-item">Computer Architecture</span>
+  <span class="ticker-item">Algorithms &amp; DSA</span><span class="ticker-item">Electromagnetism</span>
+  <span class="ticker-item">Robotics</span><span class="ticker-item">OSINT &amp; Hacking</span>
+  <span class="ticker-item">Mathematics</span><span class="ticker-item">AI &amp; ML</span>
+  <span class="ticker-item">Philosophy</span><span class="ticker-item">Embedded Systems</span>
+  <span class="ticker-item">C Programming</span><span class="ticker-item">Linux Systems</span>
+  <span class="ticker-item">Computer Networking</span><span class="ticker-item">Digital Logic</span>
+  <span class="ticker-item">Electronics &amp; Circuits</span><span class="ticker-item">Computer Architecture</span>
+  <span class="ticker-item">Algorithms &amp; DSA</span><span class="ticker-item">Electromagnetism</span>
+  <span class="ticker-item">Robotics</span><span class="ticker-item">OSINT &amp; Hacking</span>
+  <span class="ticker-item">Mathematics</span><span class="ticker-item">AI &amp; ML</span>
+  <span class="ticker-item">Philosophy</span><span class="ticker-item">Embedded Systems</span>
+</div></div>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="about-grid">
+    <div class="about-text reveal visible">
+      <div class="section-label">About</div>
+      <h2 class="section-title">I think in systems,<br>build in <span class="accent">layers</span>.</h2>
+      <p>I'm Ahmed Yasser — engineering student at Zagazig University, on track to specialize in <strong>Communications and Electronics Engineering</strong>. My curiosity has never respected department boundaries.</p>
+      <p>I got into engineering because I wanted to understand how things <em>actually work</em> — not just what the formula says, but why it exists. That's led me into low-level programming, Linux internals, digital logic, networking fundamentals, and the math that ties all of it together.</p>
+      <p>My goal isn't to be someone who uses tools. It's to understand technology deeply enough to <strong>design and build real systems from scratch</strong> — software talking to hardware, everything connected, nothing taken on faith.</p>
+    </div>
+    <div class="about-stats reveal visible">
+      <div class="stat-card"><div class="stat-num">ZU</div><div class="stat-label">Zagazig University · Faculty of Engineering</div></div>
+      <div class="stat-card"><div class="stat-num">C</div><div class="stat-label">Primary language — close to the metal, no shortcuts</div></div>
+      <div class="stat-card"><div class="stat-num">∞</div><div class="stat-label">Rabbit holes entered. Most of them absolutely worth it.</div></div>
+      <div class="stat-card"><div class="stat-num">EG</div><div class="stat-label">Based in Zagazig, Egypt — building from here</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- SKILLS -->
+<section id="skills">
+  <div class="skills-inner">
+    <div class="reveal visible">
+      <div class="section-label">Technical Skills</div>
+      <h2 class="section-title">What I'm actively <span class="accent">building</span> on.</h2>
+    </div>
+    <div class="skills-two-col">
+      <div class="reveal visible">
+        <p style="font-size:.78rem;color:var(--text2);line-height:2;margin-bottom:1.8rem;border-left:1px solid var(--border2);padding-left:1rem;">These aren't buzzwords. These are areas I actually spend hours in — reading, experimenting, breaking things, understanding why.</p>
+        <div class="skill-item"><div class="skill-header"><span class="skill-name">C Programming</span><span class="skill-pct">75%</span></div><div class="skill-track"><div class="skill-fill animated" style="--w:75%"><span class="skill-dot"></span></div></div></div>
+        <div class="skill-item"><div class="skill-header"><span class="skill-name">Linux Systems</span><span class="skill-pct">68%</span></div><div class="skill-track"><div class="skill-fill animated" style="--w:68%"><span class="skill-dot"></span></div></div></div>
+        <div class="skill-item"><div class="skill-header"><span class="skill-name">Computer Networking</span><span class="skill-pct">60%</span></div><div class="skill-track"><div class="skill-fill animated" style="--w:60%"><span class="skill-dot"></span></div></div></div>
+        <div class="skill-item"><div class="skill-header"><span class="skill-name">Digital Logic &amp; Architecture</span><span class="skill-pct">70%</span></div><div class="skill-track"><div class="skill-fill animated" style="--w:70%"><span class="skill-dot"></span></div></div></div>
+        <div class="skill-item"><div class="skill-header"><span class="skill-name">Electronics &amp; Circuits</span><span class="skill-pct">65%</span></div><div class="skill-track"><div class="skill-fill animated" style="--w:65%"><span class="skill-dot"></span></div></div></div>
+        <div class="skill-item"><div class="skill-header"><span class="skill-name">Algorithms &amp; DSA</span><span class="skill-pct">55%</span></div><div class="skill-track"><div class="skill-fill animated" style="--w:55%"><span class="skill-dot"></span></div></div></div>
+        <div class="skill-item"><div class="skill-header"><span class="skill-name">Mathematics &amp; Computing</span><span class="skill-pct">72%</span></div><div class="skill-track"><div class="skill-fill animated" style="--w:72%"><span class="skill-dot"></span></div></div></div>
+      </div>
+      <div class="int-grid reveal visible">
+        <div class="int-card"><span class="int-icon">⚡</span><div class="int-name">Electromagnetism</div><div class="int-desc">The physics behind every wireless system ever built. Maxwell's equations as a language.</div></div>
+        <div class="int-card"><span class="int-icon">🤖</span><div class="int-name">Robotics</div><div class="int-desc">Code controlling hardware. Firmware, sensors, actuators at the lowest level.</div></div>
+        <div class="int-card"><span class="int-icon">🔍</span><div class="int-name">OSINT &amp; Hacking</div><div class="int-desc">Structured curiosity. Understanding failure modes to build things that don't fail.</div></div>
+        <div class="int-card"><span class="int-icon">🧠</span><div class="int-name">AI &amp; ML</div><div class="int-desc">Past the hype — architectures, optimization, the math underneath.</div></div>
+        <div class="int-card"><span class="int-icon">⚙️</span><div class="int-name">Computer Arch.</div><div class="int-desc">Caches, pipelines, ISAs. Understand the machine; write better code.</div></div>
+        <div class="int-card"><span class="int-icon">🌌</span><div class="int-name">Philosophy</div><div class="int-desc">Engineering without philosophy is just plumbing. The questions sharpen everything.</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROJECTS -->
+<section id="projects">
+  <div class="projects-inner">
+    <div class="reveal visible">
+      <div class="section-label">Projects</div>
+      <h2 class="section-title">Things I've actually <span class="accent">built</span>.</h2>
+    </div>
+    <div class="projects-grid">
+
+      <!-- FEATURED -->
+      <div class="project-card featured reveal visible">
+        <div class="project-tag">Personal Tool · Ongoing</div>
+        <div class="project-title">Engineering Mastery Roadmap</div>
+        <div class="project-desc">A fully interactive self-designed learning system — five phases from Foundation to Endgame, built as a single HTML file. Tracks college curriculum and self-directed learning in parallel: analog circuits, DSA, OS internals, compilers, databases, and low-level C. Not a template. My actual playbook.</div>
+        <div class="project-tech">
+          <span class="tech-chip">HTML/CSS/JS</span><span class="tech-chip">5 Phases</span><span class="tech-chip">CS Fundamentals</span><span class="tech-chip">Self-Learning System</span>
+        </div>
+      </div>
+
+      <!-- C PROJECTS -->
+      <div class="project-card reveal visible" style="grid-column:1/-1;">
+        <div class="project-tag">C Programming · CLI</div>
+        <div class="project-title">C Projects — Learning by Building</div>
+        <div class="project-desc">Small focused programs written in C to solidify fundamentals — control flow, memory, user input, and logic. Every one of these started as "let me actually implement this" rather than just read about it.</div>
+        <div class="c-projects">
+          <div class="c-proj-item">
+            <div class="c-proj-name">🔢 Simple Calculator</div>
+            <div class="c-proj-desc">CLI calculator handling +, -, ×, ÷ with input validation and edge case handling. Straightforward, but writing it right taught more than reading about it.</div>
+          </div>
+          <div class="c-proj-item">
+            <div class="c-proj-name">🎲 Number Guessing Game</div>
+            <div class="c-proj-desc">Random number generation, bounded guessing loop, attempts counter, and feedback system. First time I thought carefully about game state in C.</div>
+          </div>
+          <div class="c-proj-item">
+            <div class="c-proj-name">✅ Simple To-Do List</div>
+            <div class="c-proj-desc">Terminal to-do manager with add, view, and delete — touching arrays, strings, and basic memory management. Small scope, real concepts.</div>
+          </div>
+        </div>
+        <div class="project-tech" style="margin-top:1.5rem;">
+          <span class="tech-chip">C</span><span class="tech-chip">CLI</span><span class="tech-chip">stdin/stdout</span><span class="tech-chip">Memory Management</span><span class="tech-chip">Control Flow</span>
+        </div>
+      </div>
+
+      <!-- BREWING -->
+      <div class="project-card reveal visible">
+        <div class="project-tag">In Progress</div>
+        <div class="project-title">More things cooking...</div>
+        <div class="project-desc">Always working on something. Firmware experiments, signal processing scripts, deep-dive writeups. The pipeline never stops.</div>
+        <div class="project-tech">
+          <span class="tech-chip">Embedded C</span><span class="tech-chip">RF / DSP</span><span class="tech-chip">OSINT Tools</span><span class="tech-chip">Linux Scripting</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- STACK -->
+<section>
+  <div id="stack" style="max-width:1100px;margin:0 auto;">
+    <div class="reveal visible">
+      <div class="section-label">Tools &amp; Stack</div>
+      <h2 class="section-title">What I work <span class="accent">with</span>.</h2>
+    </div>
+    <div class="stack-grid">
+      <div class="stack-card reveal visible"><span class="stack-icon">🐧</span><div class="stack-name">Linux</div><div class="stack-desc">Primary OS. Terminal-first, always.</div></div>
+      <div class="stack-card reveal visible"><span class="stack-icon">⚙️</span><div class="stack-name">C / C++</div><div class="stack-desc">Low-level, close to the metal.</div></div>
+      <div class="stack-card reveal visible"><span class="stack-icon">🌐</span><div class="stack-name">Networking</div><div class="stack-desc">TCP/IP, OSI, Wireshark.</div></div>
+      <div class="stack-card reveal visible"><span class="stack-icon">🔌</span><div class="stack-name">Electronics</div><div class="stack-desc">Multimeter, oscilloscope, breadboards.</div></div>
+      <div class="stack-card reveal visible"><span class="stack-icon">📟</span><div class="stack-name">Embedded</div><div class="stack-desc">MCUs, GPIO, UART, SPI, I2C.</div></div>
+      <div class="stack-card reveal visible"><span class="stack-icon">🔢</span><div class="stack-name">Digital Logic</div><div class="stack-desc">Gates, FSMs, HDL fundamentals.</div></div>
+      <div class="stack-card reveal visible"><span class="stack-icon">📐</span><div class="stack-name">Mathematics</div><div class="stack-desc">Linear algebra, calculus, discrete math.</div></div>
+      <div class="stack-card reveal visible"><span class="stack-icon">📝</span><div class="stack-name">LaTeX</div><div class="stack-desc">Technical typesetting, Arabic RTL.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- PHILOSOPHY -->
+<section id="philosophy">
+  <div class="philosophy-inner reveal visible">
+    <div class="section-label" style="justify-content:center;margin-bottom:1.5rem;">How I think</div>
+    <div class="big-quote">"I don't want to just use technology. I want to understand it from the ground up — so I can eventually build systems, not just operate them."</div>
+    <div class="quote-attr">— Ahmed Yasser, LinkedIn bio · actually means it</div>
+    <div class="principles">
+      <div class="principle"><div class="p-name">First Principles</div><div class="p-text">Don't memorize what you can derive. Start from what you know is true, build upward. Slower at first — compounds into something solid.</div></div>
+      <div class="principle"><div class="p-name">Depth Over Breadth</div><div class="p-text">I'd rather deeply understand ten things than shallowly know a thousand. Real knowledge transfers when you need it most.</div></div>
+      <div class="principle"><div class="p-name">Build to Learn</div><div class="p-text">Reading is preparation. Building is understanding. The moment you implement something, the fuzzy parts become sharp.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div class="contact-inner">
+    <div class="contact-left reveal visible">
+      <div class="section-label">Contact</div>
+      <h2 class="section-title">Let's build<br>something <span class="accent">real</span>.</h2>
+      <p>Working on something interesting? Need an engineer who actually cares about the fundamentals? I want to hear about it.</p>
+      <div class="contact-links">
+        <a href="mailto:ahmedyasser33843@gmail.com" class="contact-link"><span class="cl-icon">✉</span>ahmedyasser33843@gmail.com</a>
+        <a href="tel:+201024424030" class="contact-link"><span class="cl-icon">📞</span>+20 102 442 4030</a>
+        <a href="#" class="contact-link"><span class="cl-icon">📍</span>Zagazig, Egypt · ZU Faculty of Engineering</a>
+        <a href="https://linkedin.com/in/" class="contact-link"><span class="cl-icon">💼</span>LinkedIn — Ahmed Yasser</a>
+      </div>
+    </div>
+    <div class="contact-right reveal visible">
+      <h3>// reach_out.c</h3>
+      <div class="sub">I read my messages.</div>
+      <a href="mailto:ahmedyasser33843@gmail.com" class="contact-val big">ahmedyasser33843@gmail.com</a>
+      <a href="tel:+201024424030" class="contact-val">+20 102 442 4030</a>
+      <div class="c-divider">Response time: usually &lt; 24h<br>Preferred: email or Whatsapp.</div>
+      <div class="status-badge" style="margin-top:1.5rem;"><span class="status-dot"></span>Currently open to new projects</div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div>© 2026 <span class="accent">Ahmed Yasser</span> — Zagazig University, Egypt</div>
+  
+</footer>
+
+<script>
+// CURSOR
+const cursor=document.getElementById("cursor"),ring=document.getElementById("cursor-ring");
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener("mousemove",e=>{mx=e.clientX;my=e.clientY;cursor.style.left=mx+"px";cursor.style.top=my+"px";});
+(function loop(){rx+=(mx-rx)*.11;ry+=(my-ry)*.11;ring.style.left=rx+"px";ring.style.top=ry+"px";requestAnimationFrame(loop);})();
+document.querySelectorAll("a,button,.int-card,.project-card,.stat-card,.stack-card,.principle,.c-proj-item").forEach(el=>{
+  el.addEventListener("mouseenter",()=>{cursor.style.width="16px";cursor.style.height="16px";ring.style.width="52px";ring.style.height="52px";ring.style.opacity=".7";});
+  el.addEventListener("mouseleave",()=>{cursor.style.width="8px";cursor.style.height="8px";ring.style.width="32px";ring.style.height="32px";ring.style.opacity=".4";});
+});
+// NAV
+window.addEventListener("scroll",()=>document.getElementById("nav").classList.toggle("scrolled",scrollY>60));
+// REVEAL
+const ro=new IntersectionObserver(entries=>{entries.forEach((e,i)=>{if(e.isIntersecting){setTimeout(()=>e.target.classList.add("visible"),i*80);}});},{threshold:.08});
+document.querySelectorAll(".reveal").forEach(el=>ro.observe(el));
+// SKILL BARS
+const bo=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add("animated");bo.unobserve(e.target);}});},{threshold:.4});
+document.querySelectorAll(".skill-fill").forEach(f=>bo.observe(f));
+</script>
+
+</body></html>
