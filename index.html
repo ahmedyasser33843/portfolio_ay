@@ -4,7 +4,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ahmed Yasser | Engineer &amp; Builder</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&amp;family=Syne:wght@400;600;700;800&amp;family=Instrument+Serif:ital@0;1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Syne:wght@400;600;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg:       #070809;
@@ -31,9 +31,99 @@
   /* SCANLINE OVERLAY */
   body::before{content:"";position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px);pointer-events:none;z-index:9997;}
 
-  /* CURSOR */
-  #cursor{position:fixed;width:8px;height:8px;background:var(--cyan);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);box-shadow:0 0 10px var(--cyan),0 0 20px var(--cyan);transition:width .15s,height .15s;}
-  #cursor-ring{position:fixed;width:32px;height:32px;border:1px solid var(--cyan);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);opacity:.4;transition:width .2s,height .2s,opacity .2s;}
+  /* ─── CURSOR ───────────────────────────────────────────────────────────── */
+  /* Dot — snaps instantly to mouse position */
+  #cursor {
+    position: fixed;
+    width: 7px;
+    height: 7px;
+    background: var(--cyan);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 10px var(--cyan), 0 0 22px rgba(0,229,255,.55);
+    transition: width .18s cubic-bezier(.16,1,.3,1),
+                height .18s cubic-bezier(.16,1,.3,1),
+                background .2s,
+                box-shadow .2s,
+                opacity .25s;
+    opacity: 0;
+    will-change: left, top;
+  }
+
+  /* Ring — lags behind the dot */
+  #cursor-ring {
+    position: fixed;
+    width: 34px;
+    height: 34px;
+    border: 1.5px solid var(--cyan);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9998;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    transition: width .22s cubic-bezier(.16,1,.3,1),
+                height .22s cubic-bezier(.16,1,.3,1),
+                border-color .2s,
+                background .2s,
+                opacity .3s;
+    will-change: left, top;
+  }
+
+  /* Hover state — swells on interactive elements */
+  body.cursor-hover #cursor {
+    width: 14px;
+    height: 14px;
+    background: var(--cyan);
+    box-shadow: 0 0 16px var(--cyan), 0 0 36px rgba(0,229,255,.5);
+  }
+  body.cursor-hover #cursor-ring {
+    width: 54px;
+    height: 54px;
+    border-color: rgba(0,229,255,.5);
+    background: rgba(0,229,255,.04);
+  }
+
+  /* Click pulse — shrinks dot on mousedown */
+  body.cursor-click #cursor {
+    width: 4px;
+    height: 4px;
+    box-shadow: 0 0 20px var(--cyan), 0 0 40px rgba(0,229,255,.8);
+  }
+  body.cursor-click #cursor-ring {
+    width: 22px;
+    height: 22px;
+    background: rgba(0,229,255,.12);
+    border-color: var(--cyan);
+  }
+
+  /* Text mode — thin I-beam style when hovering selectable text */
+  body.cursor-text #cursor {
+    width: 2px;
+    height: 18px;
+    border-radius: 1px;
+    background: var(--cyan);
+    box-shadow: 0 0 8px var(--cyan);
+  }
+  body.cursor-text #cursor-ring {
+    opacity: 0 !important;
+  }
+
+  /* Click ripple */
+  .cursor-ripple {
+    position: fixed;
+    border-radius: 50%;
+    border: 1px solid rgba(0,229,255,.7);
+    pointer-events: none;
+    z-index: 9996;
+    transform: translate(-50%,-50%) scale(0);
+    animation: cursor-ripple-anim .55s cubic-bezier(.2,.7,.4,1) forwards;
+  }
+  @keyframes cursor-ripple-anim {
+    to { transform: translate(-50%,-50%) scale(1); opacity: 0; width: 70px; height: 70px; }
+  }
+  /* ─────────────────────────────────────────────────────────────────────── */
 
   /* NAV */
   nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;justify-content:space-between;align-items:center;padding:1.4rem 4rem;border-bottom:1px solid transparent;transition:all .3s;}
@@ -270,8 +360,8 @@
 </style>
 </head>
 <body>
-<div id="cursor" style="left: 1298px; top: 207px; width: 8px; height: 8px;"></div>
-<div id="cursor-ring" style="left: 1298px; top: 207px; width: 32px; height: 32px; opacity: 0.4;"></div>
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
 
 <!-- NAV -->
 <nav id="nav" class="">
@@ -502,17 +592,17 @@
       <h2 class="section-title">Let's build<br>something <span class="accent">real</span>.</h2>
       <p>Working on something interesting? Need an engineer who actually cares about the fundamentals? I want to hear about it.</p>
       <div class="contact-links">
-        <a href="/cdn-cgi/l/email-protection#a7c6cfcac2c3dec6d4d4c2d594949f9394e7c0cac6cecb89c4c8ca" class="contact-link"><span class="cl-icon">✉</span><span class="__cf_email__" data-cfemail="1f7e77727a7b667e6c6c7a6d2c2c272b2c5f78727e7673317c7072">[email&#160;protected]</span></a>
+        <a href="mailto:ahmedyasser33843@gmail.com" class="contact-link"><span class="cl-icon">✉</span>ahmedyasser33843@gmail.com</a>
         <a href="tel:+201024424030" class="contact-link"><span class="cl-icon">📞</span>+20 102 442 4030</a>
         <a href="#" class="contact-link"><span class="cl-icon">📍</span>Zagazig, Egypt · ZU Faculty of Engineering</a>
-        <a href="https://linkedin.com/in/" class="contact-link"><span class="cl-icon">💼</span>LinkedIn — Ahmed Yasser</a>
+        <a href="https://linkedin.com/in/ahmed-yasser" target="_blank" class="contact-link"><span class="cl-icon">💼</span>LinkedIn — Ahmed Yasser</a>
         <a href="https://www.instagram.com/dx_ahmed_yasser/" target="_blank" class="contact-link"><span class="cl-icon">📸</span>Instagram — @dx_ahmed_yasser</a>
       </div>
     </div>
     <div class="contact-right reveal visible">
       <h3>// reach_out.c</h3>
       <div class="sub">I read my messages.</div>
-      <a href="/cdn-cgi/l/email-protection#32535a5f57564b534141574001010a060172555f535b5e1c515d5f" class="contact-val big"><span class="__cf_email__" data-cfemail="94f5fcf9f1f0edf5e7e7f1e6a7a7aca0a7d4f3f9f5fdf8baf7fbf9">[email&#160;protected]</span></a>
+      <a href="mailto:ahmedyasser33843@gmail.com" class="contact-val big">ahmedyasser33843@gmail.com</a>
       <a href="tel:+201024424030" class="contact-val">+20 102 442 4030</a>
       <div class="c-divider">Response time: usually &lt; 24h<br>Preferred: email or Whatsapp.</div>
       <div class="status-badge" style="margin-top:1.5rem;"><span class="status-dot"></span>Currently open to new projects</div>
@@ -522,20 +612,135 @@
 
 <footer>
   <div>© 2026 <span class="accent">Ahmed Yasser</span> — Zagazig University, Egypt</div>
-  
 </footer>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
-// CURSOR
-const cursor=document.getElementById("cursor"),ring=document.getElementById("cursor-ring");
-let mx=0,my=0,rx=0,ry=0;
-document.addEventListener("mousemove",e=>{mx=e.clientX;my=e.clientY;cursor.style.left=mx+"px";cursor.style.top=my+"px";});
-(function loop(){rx+=(mx-rx)*.11;ry+=(my-ry)*.11;ring.style.left=rx+"px";ring.style.top=ry+"px";requestAnimationFrame(loop);})();
-document.querySelectorAll("a,button,.int-card,.project-card,.stat-card,.stack-card,.principle,.c-proj-item").forEach(el=>{
-  el.addEventListener("mouseenter",()=>{cursor.style.width="16px";cursor.style.height="16px";ring.style.width="52px";ring.style.height="52px";ring.style.opacity=".7";});
-  el.addEventListener("mouseleave",()=>{cursor.style.width="8px";cursor.style.height="8px";ring.style.width="32px";ring.style.height="32px";ring.style.opacity=".4";});
+<script>
+// ─── CURSOR ────────────────────────────────────────────────────────────────
+// Elements
+const cursor = document.getElementById("cursor");
+const ring   = document.getElementById("cursor-ring");
+
+// State
+let mx = 0, my = 0;       // actual mouse position (snaps instantly to dot)
+let rx = 0, ry = 0;       // ring position (lags behind)
+let cursorVisible = false;
+
+// ── 1. Track mouse → move dot instantly ──────────────────────────────────
+document.addEventListener("mousemove", e => {
+  mx = e.clientX;
+  my = e.clientY;
+  cursor.style.left = mx + "px";
+  cursor.style.top  = my + "px";
+
+  if (!cursorVisible) {
+    cursorVisible = true;
+    cursor.style.opacity = "1";
+    ring.style.opacity   = ".45";
+  }
 });
-// NAV
-window.addEventListener("scroll",()=>document.getElementById("nav").classList.toggle("scrolled",scrollY>60));
-// REVEAL
-const ro=new IntersectionObserver(entries=>{entries.forEach((e,i)=>{if(e.isIntersecting){setTimeout(()
+
+// ── 2. Hide/show on window leave/enter ───────────────────────────────────
+document.addEventListener("mouseleave", () => {
+  cursor.style.opacity = "0";
+  ring.style.opacity   = "0";
+  cursorVisible = false;
+});
+document.addEventListener("mouseenter", () => {
+  if (cursorVisible) return; // guard, mousemove will re-show
+});
+
+// ── 3. Ring lerp loop ────────────────────────────────────────────────────
+(function ringLoop() {
+  // Ease the ring toward the current mouse position
+  rx += (mx - rx) * 0.11;
+  ry += (my - ry) * 0.11;
+  ring.style.left = rx + "px";
+  ring.style.top  = ry + "px";
+  requestAnimationFrame(ringLoop);
+})();
+
+// ── 4. Hover states on interactive elements ──────────────────────────────
+const interactiveSelectors = [
+  "a", "button",
+  ".int-card", ".project-card",
+  ".stat-card", ".stack-card",
+  ".principle", ".c-proj-item",
+  ".tech-chip", ".nav-links a",
+  ".btn-primary", ".btn-ghost"
+].join(",");
+
+document.querySelectorAll(interactiveSelectors).forEach(el => {
+  el.addEventListener("mouseenter", () => {
+    document.body.classList.add("cursor-hover");
+  });
+  el.addEventListener("mouseleave", () => {
+    document.body.classList.remove("cursor-hover");
+  });
+});
+
+// ── 5. Text cursor mode on paragraphs / headings ─────────────────────────
+document.querySelectorAll("p, h1, h2, h3, .hero-sub, .about-text p, .project-desc").forEach(el => {
+  el.addEventListener("mouseenter", () => {
+    document.body.classList.add("cursor-text");
+  });
+  el.addEventListener("mouseleave", () => {
+    document.body.classList.remove("cursor-text");
+  });
+});
+
+// ── 6. Click feedback — shrink + ripple ──────────────────────────────────
+document.addEventListener("mousedown", () => {
+  document.body.classList.add("cursor-click");
+});
+document.addEventListener("mouseup", () => {
+  document.body.classList.remove("cursor-click");
+  spawnRipple(mx, my);
+});
+
+function spawnRipple(x, y) {
+  const r = document.createElement("div");
+  r.className = "cursor-ripple";
+  r.style.left   = x + "px";
+  r.style.top    = y + "px";
+  r.style.width  = "10px";
+  r.style.height = "10px";
+  document.body.appendChild(r);
+  r.addEventListener("animationend", () => r.remove());
+}
+// ──────────────────────────────────────────────────────────────────────────
+
+
+// ─── NAV SCROLL ───────────────────────────────────────────────────────────
+const nav = document.getElementById("nav");
+window.addEventListener("scroll", () => {
+  nav.classList.toggle("scrolled", window.scrollY > 40);
+}, { passive: true });
+
+
+// ─── REVEAL ON SCROLL ─────────────────────────────────────────────────────
+const revealEls = document.querySelectorAll(".reveal");
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add("visible");
+    }
+  });
+}, { threshold: 0.12 });
+
+revealEls.forEach(el => revealObserver.observe(el));
+
+
+// ─── SKILL BAR FILL ON SCROLL ─────────────────────────────────────────────
+const skillObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.querySelectorAll(".skill-fill").forEach(fill => {
+        fill.classList.add("animated");
+      });
+    }
+  });
+}, { threshold: 0.3 });
+
+document.querySelectorAll(".skill-item").forEach(item => skillObserver.observe(item));
+</script>
+</body></html>
