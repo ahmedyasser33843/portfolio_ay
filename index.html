@@ -26,104 +26,138 @@
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
   ::selection{background:var(--cyan);color:#000;}
   html{scroll-behavior:smooth;}
-  body{background:var(--bg);color:var(--text);font-family:"Share Tech Mono",monospace;cursor:none;overflow-x:hidden;}
+  body{background:var(--bg);color:var(--text);font-family:"Share Tech Mono",monospace;overflow-x:hidden;}
+
+  /* Hide native cursor everywhere */
+  *, *::before, *::after { cursor: none !important; }
 
   /* SCANLINE OVERLAY */
   body::before{content:"";position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px);pointer-events:none;z-index:9997;}
 
-  /* ─── CURSOR ───────────────────────────────────────────────────────────── */
-  /* Dot — snaps instantly to mouse position */
+  /* ─── CURSOR ─────────────────────────────────────────────────────────────
+     Three-layer system:
+       #cursor       — core dot, snaps instantly via RAF (high lerp)
+       #cursor-ring  — outer ring, lerps slowly behind the dot
+       .cursor-trail — fading micro-dots spawned along the movement path
+       .cursor-ripple — burst ring spawned on every click release
+     State classes on <body>:  cursor-hover | cursor-text | cursor-click
+     Priority: cursor-text overrides cursor-hover (set/remove carefully in JS)
+  ────────────────────────────────────────────────────────────────────────── */
+
+  /* DOT */
   #cursor {
     position: fixed;
-    width: 7px;
-    height: 7px;
+    width: 6px;
+    height: 6px;
     background: var(--cyan);
     border-radius: 50%;
     pointer-events: none;
     z-index: 9999;
     transform: translate(-50%, -50%);
-    box-shadow: 0 0 10px var(--cyan), 0 0 22px rgba(0,229,255,.55);
-    transition: width .18s cubic-bezier(.16,1,.3,1),
-                height .18s cubic-bezier(.16,1,.3,1),
-                background .2s,
-                box-shadow .2s,
-                opacity .25s;
+    box-shadow: 0 0 8px var(--cyan), 0 0 20px rgba(0,229,255,.4);
+    transition: width .15s cubic-bezier(.16,1,.3,1),
+                height .15s cubic-bezier(.16,1,.3,1),
+                border-radius .15s cubic-bezier(.16,1,.3,1),
+                background .18s,
+                box-shadow .18s,
+                opacity .2s;
     opacity: 0;
     will-change: left, top;
   }
 
-  /* Ring — lags behind the dot */
+  /* RING */
   #cursor-ring {
     position: fixed;
-    width: 34px;
-    height: 34px;
-    border: 1.5px solid var(--cyan);
+    width: 32px;
+    height: 32px;
+    border: 1.5px solid rgba(0,229,255,.55);
     border-radius: 50%;
     pointer-events: none;
     z-index: 9998;
     transform: translate(-50%, -50%);
     opacity: 0;
-    transition: width .22s cubic-bezier(.16,1,.3,1),
-                height .22s cubic-bezier(.16,1,.3,1),
+    transition: width .28s cubic-bezier(.16,1,.3,1),
+                height .28s cubic-bezier(.16,1,.3,1),
                 border-color .2s,
                 background .2s,
+                border-radius .2s,
                 opacity .3s;
     will-change: left, top;
   }
 
-  /* Hover state — swells on interactive elements */
+  /* ── HOVER state — swells on interactive elements ───────────────────── */
   body.cursor-hover #cursor {
-    width: 14px;
-    height: 14px;
-    background: var(--cyan);
-    box-shadow: 0 0 16px var(--cyan), 0 0 36px rgba(0,229,255,.5);
+    width: 12px;
+    height: 12px;
+    box-shadow: 0 0 14px var(--cyan), 0 0 32px rgba(0,229,255,.5);
   }
   body.cursor-hover #cursor-ring {
-    width: 54px;
-    height: 54px;
-    border-color: rgba(0,229,255,.5);
-    background: rgba(0,229,255,.04);
+    width: 50px;
+    height: 50px;
+    border-color: rgba(0,229,255,.38);
+    background: rgba(0,229,255,.03);
   }
 
-  /* Click pulse — shrinks dot on mousedown */
-  body.cursor-click #cursor {
-    width: 4px;
-    height: 4px;
-    box-shadow: 0 0 20px var(--cyan), 0 0 40px rgba(0,229,255,.8);
-  }
-  body.cursor-click #cursor-ring {
-    width: 22px;
-    height: 22px;
-    background: rgba(0,229,255,.12);
-    border-color: var(--cyan);
-  }
-
-  /* Text mode — thin I-beam style when hovering selectable text */
+  /* ── TEXT state — thin I-beam when over readable text ─────────────────
+     Takes priority over hover: JS won't set cursor-hover while cursor-text is active */
   body.cursor-text #cursor {
     width: 2px;
-    height: 18px;
+    height: 20px;
     border-radius: 1px;
     background: var(--cyan);
-    box-shadow: 0 0 8px var(--cyan);
+    box-shadow: 0 0 8px var(--cyan), 0 0 16px rgba(0,229,255,.3);
   }
   body.cursor-text #cursor-ring {
     opacity: 0 !important;
   }
 
-  /* Click ripple */
+  /* ── CLICK state — dot implodes, ring snaps inward ────────────────────── */
+  body.cursor-click #cursor {
+    width: 3px;
+    height: 3px;
+    box-shadow: 0 0 18px var(--cyan), 0 0 40px rgba(0,229,255,.75);
+  }
+  body.cursor-click #cursor-ring {
+    width: 18px;
+    height: 18px;
+    background: rgba(0,229,255,.1);
+    border-color: var(--cyan);
+  }
+
+  /* ── TRAIL particles — fading micro-dots left as cursor moves ─────────── */
+  .cursor-trail {
+    position: fixed;
+    width: 4px;
+    height: 4px;
+    background: var(--cyan);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9995;
+    transform: translate(-50%, -50%);
+    opacity: 0.5;
+    animation: cursor-trail-fade .45s ease forwards;
+  }
+  @keyframes cursor-trail-fade {
+    0%   { opacity: .45; width: 4px; height: 4px; }
+    100% { opacity: 0;   width: 1px; height: 1px; }
+  }
+
+  /* ── CLICK RIPPLE — burst ring expanding from click point ──────────────── */
   .cursor-ripple {
     position: fixed;
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
-    border: 1px solid rgba(0,229,255,.7);
+    border: 1px solid rgba(0,229,255,.65);
     pointer-events: none;
     z-index: 9996;
-    transform: translate(-50%,-50%) scale(0);
-    animation: cursor-ripple-anim .55s cubic-bezier(.2,.7,.4,1) forwards;
+    transform: translate(-50%, -50%) scale(0);
+    animation: cursor-ripple-out .6s cubic-bezier(.2,.7,.35,1) forwards;
   }
-  @keyframes cursor-ripple-anim {
-    to { transform: translate(-50%,-50%) scale(1); opacity: 0; width: 70px; height: 70px; }
+  @keyframes cursor-ripple-out {
+    to { width: 66px; height: 66px; opacity: 0; transform: translate(-50%,-50%) scale(1); }
   }
-  /* ─────────────────────────────────────────────────────────────────────── */
+  /* ──────────────────────────────────────────────────────────────────────── */
 
   /* NAV */
   nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;justify-content:space-between;align-items:center;padding:1.4rem 4rem;border-bottom:1px solid transparent;transition:all .3s;}
@@ -243,8 +277,8 @@
   #skills{background:var(--bg);border-bottom:1px solid var(--border);}
   .skills-inner{max-width:1100px;margin:0 auto;}
   .skills-two-col{display:grid;grid-template-columns:1fr 1fr;gap:5rem;margin-top:3rem;align-items:start;}
-  .skill-item{margin-bottom:1.2rem;}
-  .skill-header{display:flex;justify-content:space-between;margin-bottom:.5rem;}
+  .skill-item{margin-bottom:1.4rem;}
+  .skill-header{display:flex;justify-content:space-between;margin-bottom:.6rem;}
   .skill-name{font-size:.76rem;color:var(--text2);letter-spacing:.06em;}
   .skill-pct{font-size:.7rem;color:var(--cyan);font-family:"Syne",sans-serif;font-weight:700;}
   .skill-track{height:1px;background:var(--border);position:relative;}
@@ -360,11 +394,12 @@
 </style>
 </head>
 <body>
+<!-- Cursor elements — no inline styles, no stale state class on body -->
 <div id="cursor"></div>
 <div id="cursor-ring"></div>
 
 <!-- NAV -->
-<nav id="nav" class="">
+<nav id="nav" class="scrolled">
   <a href="#hero" class="nav-logo"><span class="bracket">[</span>&nbsp;AY&nbsp;<span class="bracket">]</span></a>
   <ul class="nav-links">
     <li><a href="#about">About</a></li>
@@ -394,9 +429,7 @@
     <div class="hero-role">Engineering Student <span>//</span> Systems Thinker <span>//</span> Builder</div>
     <p class="hero-sub">
       Studying <strong>Communications &amp; Electronics</strong> at Zagazig University.
-      My interest in engineering isn't surface-level — I want to know <em>why</em> things work,
-      not just that they do. Low-level code, circuit behavior,
-      <strong>the math that ties it all together.</strong>
+      Low-level code, circuit behavior, <em>the math underneath.</em>
     </p>
     <div class="hero-cta">
       <a href="#projects" class="btn-primary">./view_projects</a>
@@ -450,9 +483,8 @@
     <div class="about-text reveal visible">
       <div class="section-label">About</div>
       <h2 class="section-title">I think in systems,<br>build in <span class="accent">layers</span>.</h2>
-      <p>I'm Ahmed Yasser — engineering student at Zagazig University, on track to specialize in <strong>Communications and Electronics Engineering</strong>. My curiosity has never respected department boundaries.</p>
-      <p>Engineering pulled me in because I needed to understand how things <em>actually work</em> — not what the formula says, but why it exists. That curiosity pushed me into low-level programming, Linux internals, digital logic, networking fundamentals, and the mathematics underneath all of it.</p>
-      <p>My goal isn't to collect skills on a résumé. It's to reach the point where I can sit down with a hard problem, strip away the abstractions, and <strong>build something that actually works</strong> — software talking to hardware, every layer understood, nothing taken on faith.</p>
+      <p>Engineering student at Zagazig University, specializing in <strong>Communications and Electronics</strong>. I want to understand how things <em>actually work</em> — not just what the formula says, but why it exists.</p>
+      <p>That's pushed me into low-level programming, Linux internals, digital logic, and the mathematics underneath all of it. <strong>Software talking to hardware, every layer understood.</strong></p>
     </div>
     <div class="about-stats reveal visible">
       <div class="stat-card"><div class="stat-num">ZU</div><div class="stat-label">Zagazig University · Faculty of Engineering</div></div>
@@ -472,14 +504,63 @@
     </div>
     <div class="skills-two-col">
       <div class="reveal visible">
-        <p style="font-size:.78rem;color:var(--text2);line-height:2;margin-bottom:1.8rem;border-left:1px solid var(--border2);padding-left:1rem;">Not a buzzword list. These are areas where I've spent real hours — reading, breaking things, and rebuilding them until the concept clicks.</p>
-        <div class="skill-item"><div class="skill-header"><span class="skill-name">C Programming</span></div></div>
-        <div class="skill-item"><div class="skill-header"><span class="skill-name">Linux Systems</span></div></div>
-        <div class="skill-item"><div class="skill-header"><span class="skill-name">Computer Networking</span></div></div>
-        <div class="skill-item"><div class="skill-header"><span class="skill-name">Digital Logic &amp; Architecture</span></div></div>
-        <div class="skill-item"><div class="skill-header"><span class="skill-name">Electronics &amp; Circuits</span></div></div>
-        <div class="skill-item"><div class="skill-header"><span class="skill-name">Algorithms &amp; DSA</span></div></div>
-        <div class="skill-item"><div class="skill-header"><span class="skill-name">Mathematics &amp; Computing</span></div></div>
+
+        <div class="skill-item">
+          <div class="skill-header">
+            <span class="skill-name">C Programming</span>
+            
+          </div>
+          
+        </div>
+
+        <div class="skill-item">
+          <div class="skill-header">
+            <span class="skill-name">Linux Systems</span>
+            
+          </div>
+          
+        </div>
+
+        <div class="skill-item">
+          <div class="skill-header">
+            <span class="skill-name">Computer Networking</span>
+           
+          </div>
+          
+        </div>
+
+        <div class="skill-item">
+          <div class="skill-header">
+            <span class="skill-name">Digital Logic &amp; Architecture</span>
+            
+          </div>
+          
+        </div>
+
+        <div class="skill-item">
+          <div class="skill-header">
+            <span class="skill-name">Electronics &amp; Circuits</span>
+            
+          </div>
+          
+        </div>
+
+        <div class="skill-item">
+          <div class="skill-header">
+            <span class="skill-name">Algorithms &amp; DSA</span>
+            
+          </div>
+          
+        </div>
+
+        <div class="skill-item">
+          <div class="skill-header">
+            <span class="skill-name">Mathematics &amp; Computing</span>
+            
+          </div>
+          
+        </div>
+
       </div>
       <div class="int-grid reveal visible">
         <div class="int-card"><span class="int-icon">⚡</span><div class="int-name">Electromagnetism</div><div class="int-desc">The physics behind every wireless system ever built. Maxwell's equations as a language.</div></div>
@@ -516,19 +597,19 @@
       <div class="project-card reveal visible" style="grid-column:1/-1;">
         <div class="project-tag">C Programming · CLI</div>
         <div class="project-title">C Projects — Learning by Building</div>
-        <div class="project-desc">Small focused programs written in C to solidify fundamentals — control flow, memory, user input, and logic. Every one of these started as "let me actually implement this" rather than just read about it.</div>
+        <div class="project-desc">Small focused programs written in C to solidify fundamentals — control flow, memory, user input, logic. Every one started as "let me actually implement this."</div>
         <div class="c-projects">
           <div class="c-proj-item">
             <div class="c-proj-name">🔢 Simple Calculator</div>
-            <div class="c-proj-desc">CLI calculator handling +, -, ×, ÷ with input validation and edge case handling. Straightforward, but writing it right taught more than reading about it.</div>
+            <div class="c-proj-desc">CLI calculator with input validation and edge case handling.</div>
           </div>
           <div class="c-proj-item">
             <div class="c-proj-name">🎲 Number Guessing Game</div>
-            <div class="c-proj-desc">Random number generation, bounded guessing loop, attempts counter, and feedback system. First time I thought carefully about game state in C.</div>
+            <div class="c-proj-desc">Random number generation, bounded loop, attempts counter.</div>
           </div>
           <div class="c-proj-item">
             <div class="c-proj-name">✅ Simple To-Do List</div>
-            <div class="c-proj-desc">Terminal to-do manager with add, view, and delete — touching arrays, strings, and basic memory management. Small scope, real concepts.</div>
+            <div class="c-proj-desc">Terminal to-do manager — arrays, strings, basic memory management.</div>
           </div>
         </div>
         <div class="project-tech" style="margin-top:1.5rem;">
@@ -574,12 +655,12 @@
 <section id="philosophy">
   <div class="philosophy-inner reveal visible">
     <div class="section-label" style="justify-content:center;margin-bottom:1.5rem;">How I think</div>
-    <div class="big-quote">"The question I can't stop asking is: how does this actually work? Not the abstraction — the real thing. That's what drives everything I build, and everything I study."</div>
-    <div class="quote-attr">— Ahmed Yasser, LinkedIn bio · actually means it</div>
+    <div class="big-quote">"How does this actually work? Not the abstraction — the real thing."</div>
+    <div class="quote-attr">— Ahmed Yasser</div>
     <div class="principles">
-      <div class="principle"><div class="p-name">First Principles</div><div class="p-text">Don't memorize what you can derive. Start from what you know is true, build upward. Slower at first — compounds into something solid.</div></div>
-      <div class="principle"><div class="p-name">Depth Over Breadth</div><div class="p-text">I'd rather deeply understand ten things than shallowly know a thousand. Real knowledge transfers when you need it most.</div></div>
-      <div class="principle"><div class="p-name">Build to Learn</div><div class="p-text">Reading is preparation. Building is understanding. The moment you implement something, the fuzzy parts become sharp.</div></div>
+      <div class="principle"><div class="p-name">First Principles</div><div class="p-text">Don't memorize what you can derive. Start from what's true, build upward.</div></div>
+      <div class="principle"><div class="p-name">Depth Over Breadth</div><div class="p-text">I'd rather deeply understand ten things than shallowly know a thousand.</div></div>
+      <div class="principle"><div class="p-name">Build to Learn</div><div class="p-text">Reading is preparation. Building is understanding.</div></div>
     </div>
   </div>
 </section>
@@ -590,7 +671,7 @@
     <div class="contact-left reveal visible">
       <div class="section-label">Contact</div>
       <h2 class="section-title">Let's build<br>something <span class="accent">real</span>.</h2>
-      <p>Working on something interesting? Need an engineer who actually cares about the fundamentals? I want to hear about it.</p>
+      <p>Working on something interesting? I want to hear about it.</p>
       <div class="contact-links">
         <a href="mailto:ahmedyasser33843@gmail.com" class="contact-link"><span class="cl-icon">✉</span>ahmedyasser33843@gmail.com</a>
         <a href="tel:+201024424030" class="contact-link"><span class="cl-icon">📞</span>+20 102 442 4030</a>
@@ -615,99 +696,154 @@
 </footer>
 
 <script>
-// ─── CURSOR ────────────────────────────────────────────────────────────────
-// Elements
-const cursor = document.getElementById("cursor");
-const ring   = document.getElementById("cursor-ring");
+// ═══════════════════════════════════════════════════════════════════════════
+// CURSOR — complete rewrite
+// ─────────────────────────────────────────────────────────────────────────
+// Architecture:
+//   • dot   — near-instant lerp (factor 0.72) so it feels glued to the mouse
+//   • ring  — slow lerp (factor 0.10) for the trailing outer circle
+//   • trail — tiny cyan dots spawned every TRAIL_GAP pixels of movement,
+//             fade out via CSS animation and self-remove
+//   • ripple — expanding ring burst spawned on mouseup
+//
+// State machine on <body>  (only ONE active at a time — priority order):
+//   cursor-text  > cursor-hover  > cursor-click  > (default)
+//   JS enforces the priority: text blocks hover, click only overrides visuals.
+// ═══════════════════════════════════════════════════════════════════════════
 
-// State
-let mx = 0, my = 0;       // actual mouse position (snaps instantly to dot)
-let rx = 0, ry = 0;       // ring position (lags behind)
-let cursorVisible = false;
+const dot  = document.getElementById("cursor");
+const ring = document.getElementById("cursor-ring");
 
-// ── 1. Track mouse → move dot instantly ──────────────────────────────────
+// Positions
+const mouse   = { x: -200, y: -200 };   // raw mouse (starts off-screen)
+const dotPos  = { x: -200, y: -200 };   // dot lerp position
+const ringPos = { x: -200, y: -200 };   // ring lerp position
+const trailRef = { x: -200, y: -200 };  // last point a trail particle was spawned
+
+const TRAIL_GAP  = 14;   // px between trail particles
+const DOT_LERP   = 0.72; // dot follows mouse almost instantly
+const RING_LERP  = 0.10; // ring lags noticeably behind
+
+let visible = false;
+let isText  = false;  // true when hovering a text element
+
+// ── 1. Track mouse ───────────────────────────────────────────────────────
 document.addEventListener("mousemove", e => {
-  mx = e.clientX;
-  my = e.clientY;
-  cursor.style.left = mx + "px";
-  cursor.style.top  = my + "px";
+  mouse.x = e.clientX;
+  mouse.y = e.clientY;
 
-  if (!cursorVisible) {
-    cursorVisible = true;
-    cursor.style.opacity = "1";
-    ring.style.opacity   = ".45";
+  // Reveal on first move
+  if (!visible) {
+    visible = true;
+    dotPos.x  = mouse.x;  dotPos.y  = mouse.y;
+    ringPos.x = mouse.x;  ringPos.y = mouse.y;
+    trailRef.x = mouse.x; trailRef.y = mouse.y;
+    dot.style.opacity  = "1";
+    ring.style.opacity = "0.5";
+  }
+
+  // Spawn trail particle if cursor moved far enough
+  const dx = mouse.x - trailRef.x;
+  const dy = mouse.y - trailRef.y;
+  if (Math.sqrt(dx * dx + dy * dy) >= TRAIL_GAP) {
+    spawnTrail(mouse.x, mouse.y);
+    trailRef.x = mouse.x;
+    trailRef.y = mouse.y;
   }
 });
 
-// ── 2. Hide/show on window leave/enter ───────────────────────────────────
+// ── 2. Hide when pointer leaves the window ───────────────────────────────
 document.addEventListener("mouseleave", () => {
-  cursor.style.opacity = "0";
-  ring.style.opacity   = "0";
-  cursorVisible = false;
-});
-document.addEventListener("mouseenter", () => {
-  if (cursorVisible) return; // guard, mousemove will re-show
+  visible = false;
+  dot.style.opacity  = "0";
+  ring.style.opacity = "0";
 });
 
-// ── 3. Ring lerp loop ────────────────────────────────────────────────────
-(function ringLoop() {
-  // Ease the ring toward the current mouse position
-  rx += (mx - rx) * 0.11;
-  ry += (my - ry) * 0.11;
-  ring.style.left = rx + "px";
-  ring.style.top  = ry + "px";
-  requestAnimationFrame(ringLoop);
+// ── 3. RAF loop — lerp both layers every frame ───────────────────────────
+(function rafLoop() {
+  dotPos.x  += (mouse.x - dotPos.x)  * DOT_LERP;
+  dotPos.y  += (mouse.y - dotPos.y)  * DOT_LERP;
+  ringPos.x += (mouse.x - ringPos.x) * RING_LERP;
+  ringPos.y += (mouse.y - ringPos.y) * RING_LERP;
+
+  dot.style.left  = dotPos.x  + "px";
+  dot.style.top   = dotPos.y  + "px";
+  ring.style.left = ringPos.x + "px";
+  ring.style.top  = ringPos.y + "px";
+
+  requestAnimationFrame(rafLoop);
 })();
 
-// ── 4. Hover states on interactive elements ──────────────────────────────
-const interactiveSelectors = [
+// ── 4. Hover state — swell on interactive elements ───────────────────────
+//    Does NOT activate when cursor-text is already set (text takes priority)
+const HOVER_SELS = [
   "a", "button",
   ".int-card", ".project-card",
   ".stat-card", ".stack-card",
   ".principle", ".c-proj-item",
-  ".tech-chip", ".nav-links a",
-  ".btn-primary", ".btn-ghost"
+  ".tech-chip", ".btn-primary", ".btn-ghost"
 ].join(",");
 
-document.querySelectorAll(interactiveSelectors).forEach(el => {
+document.querySelectorAll(HOVER_SELS).forEach(el => {
   el.addEventListener("mouseenter", () => {
-    document.body.classList.add("cursor-hover");
+    if (!isText) document.body.classList.add("cursor-hover");
   });
   el.addEventListener("mouseleave", () => {
     document.body.classList.remove("cursor-hover");
   });
 });
 
-// ── 5. Text cursor mode on paragraphs / headings ─────────────────────────
-document.querySelectorAll("p, h1, h2, h3, .hero-sub, .about-text p, .project-desc").forEach(el => {
+// ── 5. Text mode — I-beam cursor over readable text ──────────────────────
+//    Sets isText flag so hover state cannot override it
+const TEXT_SELS = [
+  "p", "h1", "h2", "h3",
+  ".hero-sub", ".about-text p", ".project-desc",
+  ".p-text", ".int-desc", ".stat-label"
+].join(",");
+
+document.querySelectorAll(TEXT_SELS).forEach(el => {
   el.addEventListener("mouseenter", () => {
+    isText = true;
+    document.body.classList.remove("cursor-hover");  // text wins
     document.body.classList.add("cursor-text");
   });
   el.addEventListener("mouseleave", () => {
+    isText = false;
     document.body.classList.remove("cursor-text");
   });
 });
 
-// ── 6. Click feedback — shrink + ripple ──────────────────────────────────
+// ── 6. Click feedback — dot implodes, ring snaps in, then ripple ─────────
 document.addEventListener("mousedown", () => {
   document.body.classList.add("cursor-click");
 });
 document.addEventListener("mouseup", () => {
   document.body.classList.remove("cursor-click");
-  spawnRipple(mx, my);
+  spawnRipple(mouse.x, mouse.y);
 });
 
+// ── Helpers ───────────────────────────────────────────────────────────────
 function spawnRipple(x, y) {
   const r = document.createElement("div");
-  r.className = "cursor-ripple";
-  r.style.left   = x + "px";
-  r.style.top    = y + "px";
-  r.style.width  = "10px";
-  r.style.height = "10px";
+  r.className   = "cursor-ripple";
+  r.style.left  = x + "px";
+  r.style.top   = y + "px";
   document.body.appendChild(r);
   r.addEventListener("animationend", () => r.remove());
 }
-// ──────────────────────────────────────────────────────────────────────────
+
+function spawnTrail(x, y) {
+  if (!visible) return;
+  // Skip trail in text mode (too noisy over readable content)
+  if (isText) return;
+  const t = document.createElement("div");
+  t.className   = "cursor-trail";
+  t.style.left  = x + "px";
+  t.style.top   = y + "px";
+  document.body.appendChild(t);
+  t.addEventListener("animationend", () => t.remove());
+}
+// ═══════════════════════════════════════════════════════════════════════════
 
 
 // ─── NAV SCROLL ───────────────────────────────────────────────────────────
@@ -726,21 +862,22 @@ const revealObserver = new IntersectionObserver((entries) => {
     }
   });
 }, { threshold: 0.12 });
-
 revealEls.forEach(el => revealObserver.observe(el));
 
 
 // ─── SKILL BAR FILL ON SCROLL ─────────────────────────────────────────────
+// Observes each .skill-fill element and adds the "animated" class once it
+// enters the viewport, triggering the CSS transition from width:0 → var(--w).
+const skillFills = document.querySelectorAll(".skill-fill");
 const skillObserver = new IntersectionObserver((entries) => {
   entries.forEach(entry => {
     if (entry.isIntersecting) {
-      entry.target.querySelectorAll(".skill-fill").forEach(fill => {
-        fill.classList.add("animated");
-      });
+      entry.target.classList.add("animated");
+      skillObserver.unobserve(entry.target); // animate once only
     }
   });
 }, { threshold: 0.3 });
-
-document.querySelectorAll(".skill-item").forEach(item => skillObserver.observe(item));
+skillFills.forEach(el => skillObserver.observe(el));
 </script>
-</body></html>
+</body>
+</html>
